@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anonymizer Demo — Traiteur-GPT</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2e3347;
+      --muted:     #5a6075;
+      --text:      #e2e6f3;
+      --text-dim:  #9aa3bf;
+
+      --presidio:  #3b82f6;   /* blue */
+      --scrubadub: #22c55e;   /* green */
+      --faker:     #f59e0b;   /* amber */
+      --redaction: #ef4444;   /* red */
+
+      --radius: 10px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1e2235 0%, #252a3d 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+    header span.sub {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-left: 8px;
+    }
+    .badge-lib {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: .7rem;
+      padding: 3px 9px;
+      border-radius: 99px;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .badge.ok   { background: #16391f; color: #4ade80; border: 1px solid #166534; }
+    .badge.warn { background: #3d2506; color: #fbbf24; border: 1px solid #78350f; }
+
+    /* ── Input zone ───────────────────────────────────────── */
+    .input-zone {
+      padding: 24px 28px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .input-zone label {
+      font-size: .8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text-dim);
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    #userInput {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: var(--font);
+      padding: 12px 16px;
+      resize: vertical;
+      min-height: 88px;
+      line-height: 1.6;
+      outline: none;
+      transition: border-color .2s;
+    }
+    #userInput:focus { border-color: var(--presidio); }
+    #userInput::placeholder { color: var(--muted); }
+
+    /* Sample selector */
+    .samples-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .samples-bar span {
+      font-size: .75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .sample-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-dim);
+      font-size: .78rem;
+      padding: 5px 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .sample-btn:hover {
+      background: #252a3d;
+      border-color: var(--presidio);
+      color: var(--text);
+    }
+    #clearBtn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: .78rem;
+      padding: 5px 11px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    #clearBtn:hover { border-color: var(--redaction); color: var(--redaction); }
+
+    /* ── Columns grid ─────────────────────────────────────── */
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      padding: 20px 28px 28px;
+      flex: 1;
+    }
+
+    @media (max-width: 900px) {
+      .columns { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .columns { grid-template-columns: 1fr; }
+    }
+
+    /* ── Column card ──────────────────────────────────────── */
+    .col-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .col-header {
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .col-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .col-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .col-title h2 {
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .col-tag {
+      font-size: .68rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-left: auto;
+    }
+    .col-desc {
+      font-size: .72rem;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+
+    /* color accents per column */
+    .col-presidio  .col-dot { background: var(--presidio); }
+    .col-presidio  .col-tag { background: #1e3a5f; color: var(--presidio); }
+    .col-presidio  .col-header { border-top: 3px solid var(--presidio); }
+
+    .col-scrubadub .col-dot { background: var(--scrubadub); }
+    .col-scrubadub .col-tag { background: #14291e; color: var(--scrubadub); }
+    .col-scrubadub .col-header { border-top: 3px solid var(--scrubadub); }
+
+    .col-faker     .col-dot { background: var(--faker); }
+    .col-faker     .col-tag { background: #2f1e07; color: var(--faker); }
+    .col-faker     .col-header { border-top: 3px solid var(--faker); }
+
+    .col-redaction .col-dot { background: var(--redaction); }
+    .col-redaction .col-tag { background: #2d1212; color: var(--redaction); }
+    .col-redaction .col-header { border-top: 3px solid var(--redaction); }
+
+    /* ── Text output ──────────────────────────────────────── */
+    .col-body {
+      padding: 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .output-text {
+      font-size: .88rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+      min-height: 60px;
+    }
+    .output-text.placeholder { color: var(--muted); font-style: italic; }
+
+    /* spinning loader */
+    .loader {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text-dim);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading .loader { display: inline-block; }
+    .loading .output-text { opacity: .4; }
+
+    /* entity highlights in presidio output */
+    .ent {
+      display: inline-block;
+      border-radius: 4px;
+      padding: 0 5px;
+      font-size: .82em;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .ent-PERSON        { background: #1e3a5f; color: #93c5fd; }
+    .ent-EMAIL_ADDRESS { background: #1a3320; color: #6ee7b7; }
+    .ent-PHONE_NUMBER  { background: #2d1f05; color: #fcd34d; }
+    .ent-LOCATION      { background: #27153b; color: #c4b5fd; }
+    .ent-CREDIT_CARD   { background: #2d1212; color: #fca5a5; }
+    .ent-DATE_TIME     { background: #18252e; color: #67e8f9; }
+    .ent-default       { background: #1e2235; color: var(--text-dim); }
+
+    /* entity pills list */
+    .entities-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .ent-pill {
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .ent-pill .score { color: var(--muted); font-size: .65rem; }
+
+    /* Faker mapping table */
+    .mapping-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--faker);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .75rem;
+    }
+    .mapping-table th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 4px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mapping-table td {
+      padding: 4px 6px;
+      border-bottom: 1px solid #1e2235;
+      vertical-align: top;
+      word-break: break-word;
+    }
+    .mapping-table td:first-child { color: var(--redaction); }
+    .mapping-table td:last-child  { color: var(--faker); }
+
+    /* unavailable state */
+    .unavailable .output-text {
+      color: var(--muted);
+      font-style: italic;
+      font-size: .8rem;
+    }
+
+    /* ── Footer ───────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 12px;
+      font-size: .72rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────── -->
+<header>
+  <span style="font-size:1.5rem">🛡️</span>
+  <div>
+    <h1>Anonymizer Demo <span class="sub">— Traiteur-GPT TP</span></h1>
+  </div>
+  <div class="badge-lib" id="libBadges">
+    <!-- populated by JS -->
+  </div>
+</header>
+
+<!-- ── Input zone ──────────────────────────────────────────────── -->
+<div class="input-zone">
+  <label>Texte source — saisie libre ou exemple prédéfini ↓</label>
+  <div class="input-row">
+    <textarea id="userInput" placeholder="Tapez un texte contenant des données personnelles (nom, email, téléphone, adresse…)&#10;Le traitement se fait en temps réel."></textarea>
+  </div>
+  <div class="samples-bar">
+    <span>Exemples :</span>
+    <div id="sampleBtns"></div>
+    <button id="clearBtn">✕ Effacer</button>
+  </div>
+</div>
+
+<!-- ── Columns ─────────────────────────────────────────────────── -->
+<div class="columns">
+
+  <!-- Presidio -->
+  <div class="col-card col-presidio" id="col-presidio">
+    <div class="col-header">
+      <div class="col-title">
+        <div class="col-dot"></div>
+        <h2>Microsoft Presidio</h2>
+        <span class="col-tag">Tokenisation</span>
+      </div>
+      <div class="col-desc">
+        Détection NLP (spaCy) → remplace par <code>&lt;PERSONNE&gt;</code>, <code>&lt;EMAIL&gt;</code>…
+        Irréversible · Très précis.
+      </div>
+    </div>
+    <div class="col-body">
+      <div class="loader"></div>
+      <div class="output-text placeholder" id="presidio-text">En attente de saisie…</div>
+      <div class="entities-list" id="presidio-entities"></div>
+    </div>
+  </div>
+
+  <!-- Scrubadub -->
+  <div class="col-card col-scrubadub" id="col-scrubadub">
+    <div class="col-header">
+      <div class="col-title">
+        <div class="col-dot"></div>
+        <h2>Scrubadub</h2>
+        <span class="col-tag">Masquage</span>
+      </div>
+      <div class="col-desc">
+        Détection par regex + patterns → remplace par <code>{{FILTH}}</code>.
+        Irréversible · Rapide · Léger.
+      </div>
+    </div>
+    <div class="col-body">
+      <div class="loader"></div>
+      <div class="output-text placeholder" id="scrubadub-text">En attente de saisie…</div>
+    </div>
+  </div>
+
+  <!-- Faker -->
+  <div class="col-card col-faker" id="col-faker">
+    <div class="col-header">
+      <div class="col-title">
+        <div class="col-dot"></div>
+        <h2>Faker</h2>
+        <span class="col-tag">Pseudonymisation ↩</span>
+      </div>
+      <div class="col-desc">
+        Remplace par de fausses données réalistes. <strong>Réversible</strong> via la table de correspondance.
+      </div>
+    </div>
+    <div class="col-body">
+      <div class="loader"></div>
+      <div class="output-text placeholder" id="faker-text">En attente de saisie…</div>
+      <div id="faker-mapping"></div>
+    </div>
+  </div>
+
+  <!-- Redaction -->
+  <div class="col-card col-redaction" id="col-redaction">
+    <div class="col-header">
+      <div class="col-title">
+        <div class="col-dot"></div>
+        <h2>Caviardage</h2>
+        <span class="col-tag">Suppression</span>
+      </div>
+      <div class="col-desc">
+        Remplacement par ████. Information définitivement détruite. Technique la plus agressive.
+      </div>
+    </div>
+    <div class="col-body">
+      <div class="loader"></div>
+      <div class="output-text placeholder" id="redaction-text">En attente de saisie…</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Traiteur-GPT — TP Anonymisation des données personnelles · 2025
+</footer>
+
+<script>
+  const API = "";   // même origine
+
+  // ── Debounce ──────────────────────────────────────────────────────────────
+  function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // ── Entity styling ────────────────────────────────────────────────────────
+  const ENT_CLASS = {
+    PERSON:        "ent-PERSON",
+    EMAIL_ADDRESS: "ent-EMAIL_ADDRESS",
+    PHONE_NUMBER:  "ent-PHONE_NUMBER",
+    LOCATION:      "ent-LOCATION",
+    CREDIT_CARD:   "ent-CREDIT_CARD",
+    DATE_TIME:     "ent-DATE_TIME",
+  };
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // Highlight <TOKEN> patterns in Presidio output
+  function renderPresidioText(raw) {
+    return escapeHtml(raw).replace(
+      /&lt;([A-Z_]+)&gt;/g,
+      (_, label) => {
+        const cls = ENT_CLASS[label] || "ent-default";
+        return `<span class="ent ${cls}">&lt;${label}&gt;</span>`;
+      }
+    );
+  }
+
+  // ── Render columns ────────────────────────────────────────────────────────
+  function setLoading(on) {
+    ["presidio","scrubadub","faker","redaction"].forEach(id => {
+      const card = document.getElementById(`col-${id}`);
+      card.classList.toggle("loading", on);
+    });
+  }
+
+  function renderResult(data) {
+    // ── Presidio ──
+    const ptEl = document.getElementById("presidio-text");
+    const peEl = document.getElementById("presidio-entities");
+    const p = data.presidio;
+
+    if (!p.available) {
+      document.getElementById("col-presidio").classList.add("unavailable");
+      ptEl.classList.remove("placeholder");
+      ptEl.textContent = p.text;
+    } else {
+      document.getElementById("col-presidio").classList.remove("unavailable");
+      ptEl.classList.remove("placeholder");
+      ptEl.innerHTML = renderPresidioText(p.text || "");
+      peEl.innerHTML = "";
+      (p.entities || []).forEach(e => {
+        const cls = ENT_CLASS[e.type] || "ent-default";
+        const pill = document.createElement("span");
+        pill.className = `ent-pill ${cls}`;
+        pill.innerHTML = `${escapeHtml(e.original)} <span class="score">${e.score}</span>`;
+        peEl.appendChild(pill);
+      });
+    }
+
+    // ── Scrubadub ──
+    const sEl = document.getElementById("scrubadub-text");
+    const s = data.scrubadub;
+    if (!s.available) {
+      document.getElementById("col-scrubadub").classList.add("unavailable");
+    } else {
+      document.getElementById("col-scrubadub").classList.remove("unavailable");
+    }
+    sEl.classList.remove("placeholder");
+    sEl.textContent = s.text || "";
+
+    // ── Faker ──
+    const fEl  = document.getElementById("faker-text");
+    const fmEl = document.getElementById("faker-mapping");
+    const f = data.faker;
+    if (!f.available) {
+      document.getElementById("col-faker").classList.add("unavailable");
+    } else {
+      document.getElementById("col-faker").classList.remove("unavailable");
+    }
+    fEl.classList.remove("placeholder");
+    fEl.textContent = f.text || "";
+
+    fmEl.innerHTML = "";
+    const mapping = f.mapping || {};
+    const keys = Object.keys(mapping);
+    if (keys.length > 0) {
+      const title = document.createElement("div");
+      title.className = "mapping-title";
+      title.innerHTML = `↩ Table de correspondance <span style="color:var(--muted);font-size:.65rem;font-weight:400">(permet la réversibilité)</span>`;
+      fmEl.appendChild(title);
+
+      const tbl = document.createElement("table");
+      tbl.className = "mapping-table";
+      tbl.innerHTML = `<thead><tr><th>Original (réel)</th><th>Pseudonyme (fictif)</th></tr></thead>`;
+      const tbody = document.createElement("tbody");
+      keys.forEach(orig => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${escapeHtml(orig)}</td><td>${escapeHtml(mapping[orig])}</td>`;
+        tbody.appendChild(tr);
+      });
+      tbl.appendChild(tbody);
+      fmEl.appendChild(tbl);
+    }
+
+    // ── Redaction ──
+    const rEl = document.getElementById("redaction-text");
+    rEl.classList.remove("placeholder");
+    rEl.textContent = data.redaction.text || "";
+  }
+
+  function showPlaceholder() {
+    ["presidio-text","scrubadub-text","faker-text","redaction-text"].forEach(id => {
+      const el = document.getElementById(id);
+      el.textContent = "En attente de saisie…";
+      el.classList.add("placeholder");
+    });
+    document.getElementById("presidio-entities").innerHTML = "";
+    document.getElementById("faker-mapping").innerHTML = "";
+  }
+
+  // ── API call ──────────────────────────────────────────────────────────────
+  async function processText(text) {
+    if (!text.trim()) { showPlaceholder(); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/anonymize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderResult(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const debouncedProcess = debounce(processText, 320);
+
+  // ── Input listener ────────────────────────────────────────────────────────
+  document.getElementById("userInput").addEventListener("input", e => {
+    debouncedProcess(e.target.value);
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    document.getElementById("userInput").value = "";
+    showPlaceholder();
+  });
+
+  // ── Status badges ─────────────────────────────────────────────────────────
+  async function loadStatus() {
+    try {
+      const res = await fetch(`${API}/status`);
+      const s = await res.json();
+      const bar = document.getElementById("libBadges");
+      const libs = [
+        { name: "Presidio" + (s.presidio_lang ? ` (${s.presidio_lang})` : ""), ok: s.presidio },
+        { name: "Scrubadub", ok: s.scrubadub },
+        { name: "Faker",     ok: s.faker },
+      ];
+      libs.forEach(({ name, ok }) => {
+        const b = document.createElement("span");
+        b.className = `badge ${ok ? "ok" : "warn"}`;
+        b.textContent = `${ok ? "✓" : "✗"} ${name}`;
+        bar.appendChild(b);
+      });
+    } catch (e) { /* skip */ }
+  }
+
+  // ── Sample buttons ────────────────────────────────────────────────────────
+  async function loadSamples() {
+    try {
+      const res = await fetch(`${API}/samples`);
+      const samples = await res.json();
+      const container = document.getElementById("sampleBtns");
+      samples.forEach(s => {
+        const btn = document.createElement("button");
+        btn.className = "sample-btn";
+        btn.textContent = `${s.icon} ${s.title}`;
+        btn.addEventListener("click", () => {
+          const ta = document.getElementById("userInput");
+          ta.value = s.text;
+          processText(s.text);
+        });
+        container.appendChild(btn);
+      });
+    } catch (e) { /* skip */ }
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  loadStatus();
+  loadSamples();
+</script>
+</body>
+</html>
