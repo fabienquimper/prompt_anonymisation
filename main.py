@@ -42,6 +42,7 @@ except ImportError:
 PRESIDIO_LANG = "en"
 analyzer = None
 anonymizer_engine = None
+raw_spacy = None   # direct spaCy model for raw NER inspection
 
 if PRESIDIO_AVAILABLE:
     from presidio_analyzer.nlp_engine import NlpEngineProvider
@@ -55,6 +56,8 @@ if PRESIDIO_AVAILABLE:
             nlp_engine = NlpEngineProvider(nlp_configuration=cfg).create_engine()
             analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["fr"])
             PRESIDIO_LANG = "fr"
+            # Grab the already-loaded spaCy model from Presidio's engine (no double load)
+            raw_spacy = getattr(nlp_engine, "nlp", {}).get("fr")
             break
         except Exception:
             continue
@@ -111,9 +114,22 @@ def presidio_anonymize(text: str) -> dict:
             }
             for r in results
         ]
-        return {"available": True, "text": anonymized.text, "entities": entities}
+
+        # Entities spaCy detected but Presidio silently ignored (e.g. MISC instead of PER)
+        spacy_missed = []
+        if raw_spacy:
+            doc = raw_spacy(text)
+            for ent in doc.ents:
+                overlaps = any(
+                    r.start < ent.end_char and r.end > ent.start_char
+                    for r in results
+                )
+                if not overlaps:
+                    spacy_missed.append({"text": ent.text, "label": ent.label_})
+
+        return {"available": True, "text": anonymized.text, "entities": entities, "spacy_missed": spacy_missed}
     except Exception as exc:
-        return {"available": True, "text": f"Erreur : {exc}", "entities": []}
+        return {"available": True, "text": f"Erreur : {exc}", "entities": [], "spacy_missed": []}
 
 
 def scrubadub_anonymize(text: str) -> dict:
@@ -274,6 +290,46 @@ SAMPLE_TEXTS = [
             "(marie.leclerc@hotmail.com). Elle habite à Bordeaux. "
             "Son numéro client est le 04 56 78 90 12. "
             "Paiement effectué avec la carte 1234 5678 8765 4321."
+        ),
+    },
+    {
+        "id": 5,
+        "icon": "🛒🇬🇧",
+        "title": "Individual Order",
+        "text": (
+            "Hello, my name is James Mitchell and I would like to order 50 meals for my "
+            "event on March 15th. My phone number is +44 7700 900456 and my address is "
+            "22 Baker Street, London W1U 3BX. My email is james.mitchell@gmail.com"
+        ),
+    },
+    {
+        "id": 6,
+        "icon": "🌰🇬🇧",
+        "title": "Client Allergy",
+        "text": (
+            "Hi! My name is Emily Carter. I have a severe allergy to nuts and shellfish. "
+            "For my Saturday order, please deliver to 8 Elm Avenue, Manchester M1 4PW. "
+            "Budget: £2,500. Call me back at +44 7911 123456."
+        ),
+    },
+    {
+        "id": 7,
+        "icon": "💼🇬🇧",
+        "title": "Corporate Order (credit card)",
+        "text": (
+            "Professional order for Mr. Robert Hughes (Hughes & Partners Ltd). "
+            "100 covers on 20/04/2024. Card number: 4532 1234 5678 9012. "
+            "Contact: r.hughes@company.co.uk — Tel: +44 20 7946 0321"
+        ),
+    },
+    {
+        "id": 8,
+        "icon": "💬🇬🇧",
+        "title": "Customer Support",
+        "text": (
+            "Your case has been assigned to Sarah Thompson (sarah.thompson@hotmail.com). "
+            "She is based in Birmingham. Her customer reference is +44 121 496 0012. "
+            "Payment made with card 1234 5678 8765 4321."
         ),
     },
 ]

@@ -322,6 +322,46 @@
     .mapping-table td:first-child { color: var(--redaction); }
     .mapping-table td:last-child  { color: var(--faker); }
 
+    /* spaCy missed entities warning */
+    .spacy-warn {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .spacy-warn-title {
+      font-size: .7rem;
+      font-weight: 700;
+      color: #fb923c;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .spacy-warn-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .spacy-warn-pill {
+      font-size: .7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #2d1a0a;
+      border: 1px solid #78350f;
+      color: #fb923c;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .spacy-warn-pill .spacy-label {
+      color: #6b7280;
+      font-size: .62rem;
+      font-variant: small-caps;
+    }
+
     /* unavailable state */
     .unavailable .output-text {
       color: var(--muted);
@@ -385,6 +425,7 @@
       <div class="loader"></div>
       <div class="output-text placeholder" id="presidio-text">En attente de saisie…</div>
       <div class="entities-list" id="presidio-entities"></div>
+      <div id="presidio-spacy-warn"></div>
     </div>
   </div>
 
@@ -514,6 +555,29 @@
         pill.innerHTML = `${escapeHtml(e.original)} <span class="score">${e.score}</span>`;
         peEl.appendChild(pill);
       });
+
+      const warnEl = document.getElementById("presidio-spacy-warn");
+      warnEl.innerHTML = "";
+      const missed = p.spacy_missed || [];
+      if (missed.length > 0) {
+        const section = document.createElement("div");
+        section.className = "spacy-warn";
+        const title = document.createElement("div");
+        title.className = "spacy-warn-title";
+        title.innerHTML = `⚠ Données non protégées — classées autrement que PERSONNE par spaCy`;
+        section.appendChild(title);
+        const list = document.createElement("div");
+        list.className = "spacy-warn-list";
+        missed.forEach(m => {
+          const pill = document.createElement("span");
+          pill.className = "spacy-warn-pill";
+          pill.title = `spaCy a classé "${m.text}" comme ${m.label} au lieu de PER → Presidio l'a ignoré`;
+          pill.innerHTML = `${escapeHtml(m.text)} <span class="spacy-label">classé ${escapeHtml(m.label)}, non caviardé</span>`;
+          list.appendChild(pill);
+        });
+        section.appendChild(list);
+        warnEl.appendChild(section);
+      }
     }
 
     // ── Scrubadub ──
@@ -574,6 +638,7 @@
       el.classList.add("placeholder");
     });
     document.getElementById("presidio-entities").innerHTML = "";
+    document.getElementById("presidio-spacy-warn").innerHTML = "";
     document.getElementById("faker-mapping").innerHTML = "";
   }
 
