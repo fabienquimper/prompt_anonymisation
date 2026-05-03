@@ -65,8 +65,10 @@ uvicorn main:app --reload
 ```bash
 curl -X POST http://localhost:8000/anonymize \
   -H "Content-Type: application/json" \
-  -d '{"text": "Bonjour, je suis Jean Dupont, mon email est jean@example.com"}'
+  -d '{"text": "Bonjour, je suis Jean Dupont, mon email est jean@example.com"}' | jq
 ```
+
+Si jq n'est pas installé `sudo apt install jq` (outil de visualisation de sortie)
 
 ### Réponse
 
