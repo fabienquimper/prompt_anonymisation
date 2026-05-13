@@ -271,6 +271,7 @@
     .ent-CREDIT_CARD   { background: #2d1212; color: #fca5a5; }
     .ent-DATE_TIME     { background: #18252e; color: #67e8f9; }
     .ent-default       { background: #1e2235; color: var(--text-dim); }
+    .ent-HEALTH        { background: #2d1228; color: #f9a8d4; }
 
     /* entity pills list */
     .entities-list {
@@ -362,6 +363,40 @@
       font-variant: small-caps;
     }
 
+    /* ── Options bar ─────────────────────────────────────── */
+    .options-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding-top: 4px;
+    }
+    .option-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      font-size: .8rem;
+      color: var(--text-dim);
+      user-select: none;
+      transition: color .15s;
+    }
+    .option-toggle:hover { color: var(--text); }
+    .option-toggle input[type="checkbox"] {
+      accent-color: #f472b6;
+      width: 14px; height: 14px;
+      cursor: pointer;
+    }
+    .art9-badge {
+      font-size: .62rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #2d1228;
+      color: #f472b6;
+      border: 1px solid #831843;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+
     /* unavailable state */
     .unavailable .output-text {
       color: var(--muted);
@@ -402,6 +437,13 @@
     <span>Exemples :</span>
     <div id="sampleBtns"></div>
     <button id="clearBtn">✕ Effacer</button>
+  </div>
+  <div class="options-bar">
+    <label class="option-toggle" title="Détecte les maladies, allergies et conditions médicales via un dictionnaire de termes (PatternRecognizer custom — Art. 9 RGPD)">
+      <input type="checkbox" id="detectHealth" />
+      <span>🏥 Détecter les données de santé</span>
+      <span class="art9-badge">Art. 9 RGPD</span>
+    </label>
   </div>
 </div>
 
@@ -508,6 +550,7 @@
     LOCATION:      "ent-LOCATION",
     CREDIT_CARD:   "ent-CREDIT_CARD",
     DATE_TIME:     "ent-DATE_TIME",
+    HEALTH:        "ent-HEALTH",
   };
 
   function escapeHtml(s) {
@@ -647,10 +690,11 @@
     if (!text.trim()) { showPlaceholder(); return; }
     setLoading(true);
     try {
+      const detectHealth = document.getElementById("detectHealth").checked;
       const res = await fetch(`${API}/anonymize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, detect_health: detectHealth }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -672,6 +716,11 @@
   document.getElementById("clearBtn").addEventListener("click", () => {
     document.getElementById("userInput").value = "";
     showPlaceholder();
+  });
+
+  document.getElementById("detectHealth").addEventListener("change", () => {
+    const text = document.getElementById("userInput").value;
+    processText(text);
   });
 
   // ── Status badges ─────────────────────────────────────────────────────────

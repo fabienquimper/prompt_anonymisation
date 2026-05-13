@@ -17,7 +17,7 @@ app.add_middleware(
 # ── Library availability ──────────────────────────────────────────────────────
 
 try:
-    from presidio_analyzer import AnalyzerEngine
+    from presidio_analyzer import AnalyzerEngine, PatternRecognizer
     from presidio_anonymizer import AnonymizerEngine
     PRESIDIO_AVAILABLE = True
 except ImportError:
@@ -67,6 +67,73 @@ if PRESIDIO_AVAILABLE:
 
     anonymizer_engine = AnonymizerEngine()
 
+# ── Medical terms recognizer (PatternRecognizer custom, Art. 9 RGPD) ─────────
+
+medical_recognizer = None
+
+if PRESIDIO_AVAILABLE:
+    _MEDICAL_TERMS = [
+        # Maladies chroniques
+        "diabète", "diabétique",
+        "cancer", "tumeur", "leucémie", "lymphome",
+        "sida", "vih",
+        "asthme", "asthmatique",
+        "épilepsie", "épileptique",
+        "alzheimer", "parkinson",
+        "autisme", "autiste",
+        "sclérose",
+        # Santé mentale
+        "schizophrénie", "schizophrène",
+        "dépression", "dépressif", "dépressive",
+        "bipolaire",
+        "anxiété",
+        "anorexie", "anorexique", "boulimie",
+        # Allergies & intolérances alimentaires (14 allergènes majeurs + autres)
+        "allergie", "allergique",
+        "intolérance", "intolérant",
+        "cœliaque", "coeliaque",
+        "gluten", "sans gluten",
+        "lactose", "caséine",
+        "arachide", "arachides", "cacahuète", "cacahuètes",
+        "noix", "noisette", "amande", "noix de cajou", "noix de pécan",
+        "pistache", "macadamia",
+        "crustacé", "crustacés", "crevette", "homard", "crabe",
+        "mollusque", "mollusques", "huître", "moule", "calamar",
+        "poisson", "cabillaud", "saumon", "thon",
+        "œuf", "œufs",
+        "lait", "produit laitier",
+        "soja", "sésame",
+        "blé", "seigle", "orge", "avoine",
+        "moutarde", "céleri", "lupin",
+        "sulfite", "sulfites",
+        "fructose", "histamine",
+        # Autres conditions
+        "handicap", "handicapé",
+        "obésité", "obèse",
+        "hypertension", "hypertendu",
+        "hépatite",
+        "séropositif", "séropositive",
+        "enceinte", "grossesse",
+        "insuffisance cardiaque", "insuffisance rénale",
+    ]
+    _MEDICAL_CONTEXT = [
+        "souffre", "atteint", "atteinte",
+        "diagnostiqué", "diagnostiquée",
+        "traitement", "médicament",
+        "maladie", "pathologie",
+        "allergie", "allergique", "intolérant", "intolérance",
+        "évite", "éviter", "interdit", "interdite", "exclure", "exclu",
+        "réaction", "anaphylaxie", "anaphylactique",
+        "sans", "régime", "régime sans",
+    ]
+    medical_recognizer = PatternRecognizer(
+        supported_entity="HEALTH",
+        deny_list=_MEDICAL_TERMS,
+        context=_MEDICAL_CONTEXT,
+        supported_language="fr",
+        name="MedicalTermRecognizer",
+    )
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 ENTITY_FR = {
@@ -80,6 +147,7 @@ ENTITY_FR = {
     "IP_ADDRESS": "IP",
     "IBAN_CODE": "IBAN",
     "NRP": "NATIONALITÉ",
+    "HEALTH": "SANTÉ",
 }
 
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
@@ -87,15 +155,19 @@ _PHONE_FR = re.compile(r"\b0[1-9](?:[\s.\-]?\d{2}){4}\b")
 _CARD_RE = re.compile(r"\b\d{4}[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{4}\b")
 
 
-def _analyze(text: str):
+def _analyze(text: str, detect_health: bool = False):
     if not PRESIDIO_AVAILABLE:
         return []
-    return analyzer.analyze(text=text, language=PRESIDIO_LANG)
+    results = list(analyzer.analyze(text=text, language=PRESIDIO_LANG))
+    if detect_health and medical_recognizer:
+        health_results = medical_recognizer.analyze(text=text, entities=["HEALTH"], nlp_artifacts=None)
+        results.extend(health_results)
+    return results
 
 
 # ── Anonymisation functions ───────────────────────────────────────────────────
 
-def presidio_anonymize(text: str) -> dict:
+def presidio_anonymize(text: str, detect_health: bool = False) -> dict:
     if not PRESIDIO_AVAILABLE:
         return {
             "available": False,
@@ -103,7 +175,7 @@ def presidio_anonymize(text: str) -> dict:
             "entities": [],
         }
     try:
-        results = _analyze(text)
+        results = _analyze(text, detect_health)
         anonymized = anonymizer_engine.anonymize(text=text, analyzer_results=results)
         entities = [
             {
@@ -145,7 +217,7 @@ def scrubadub_anonymize(text: str) -> dict:
         return {"available": True, "text": f"Erreur : {exc}"}
 
 
-def faker_pseudonymize(text: str) -> dict:
+def faker_pseudonymize(text: str, detect_health: bool = False) -> dict:
     if not FAKER_AVAILABLE:
         return {
             "available": False,
@@ -159,7 +231,7 @@ def faker_pseudonymize(text: str) -> dict:
             "mapping": {},
         }
     try:
-        results = sorted(_analyze(text), key=lambda r: r.start, reverse=True)
+        results = sorted(_analyze(text, detect_health), key=lambda r: r.start, reverse=True)
         mapping: dict[str, str] = {}
         pseudo = text
 
@@ -179,6 +251,8 @@ def faker_pseudonymize(text: str) -> dict:
                     mapping[original] = fake.credit_card_number(card_type="visa16")
                 elif et == "DATE_TIME":
                     mapping[original] = fake.date(pattern="%d/%m/%Y")
+                elif et == "HEALTH":
+                    mapping[original] = f"[CONDITION_MÉDICALE]"
                 else:
                     mapping[original] = f"[{et}_FICTIF]"
             pseudo = pseudo[: r.start] + mapping[original] + pseudo[r.end :]
@@ -188,7 +262,7 @@ def faker_pseudonymize(text: str) -> dict:
         return {"available": True, "text": f"Erreur : {exc}", "mapping": {}}
 
 
-def redact_text(text: str) -> dict:
+def redact_text(text: str, detect_health: bool = False) -> dict:
     # Start with regex pass for common patterns not always caught by NLP
     redacted = _EMAIL_RE.sub("██████████", text)
     redacted = _PHONE_FR.sub("██ ██ ██ ██ ██", redacted)
@@ -196,7 +270,7 @@ def redact_text(text: str) -> dict:
 
     if PRESIDIO_AVAILABLE:
         try:
-            results = sorted(_analyze(text), key=lambda r: r.start, reverse=True)
+            results = sorted(_analyze(text, detect_health), key=lambda r: r.start, reverse=True)
             for r in results:
                 length = r.end - r.start
                 redacted = redacted[: r.start] + "█" * length + redacted[r.end :]
@@ -210,6 +284,7 @@ def redact_text(text: str) -> dict:
 
 class TextRequest(BaseModel):
     text: str
+    detect_health: bool = False
 
 
 @app.get("/")
@@ -220,6 +295,7 @@ async def root():
 @app.post("/anonymize")
 async def anonymize(request: TextRequest):
     text = request.text.strip()
+    dh = request.detect_health
     if not text:
         return {
             "presidio": {"available": PRESIDIO_AVAILABLE, "text": "", "entities": []},
@@ -228,10 +304,10 @@ async def anonymize(request: TextRequest):
             "redaction": {"available": True, "text": ""},
         }
     return {
-        "presidio": presidio_anonymize(text),
+        "presidio": presidio_anonymize(text, dh),
         "scrubadub": scrubadub_anonymize(text),
-        "faker": faker_pseudonymize(text),
-        "redaction": redact_text(text),
+        "faker": faker_pseudonymize(text, dh),
+        "redaction": redact_text(text, dh),
     }
 
 
@@ -330,6 +406,17 @@ SAMPLE_TEXTS = [
             "Your case has been assigned to Sarah Thompson (sarah.thompson@hotmail.com). "
             "She is based in Birmingham. Her customer reference is +44 121 496 0012. "
             "Payment made with card 1234 5678 8765 4321."
+        ),
+    },
+    {
+        "id": 9,
+        "icon": "🏥",
+        "title": "Données de santé (Art. 9)",
+        "text": (
+            "Bonjour, je suis Paul Renard. Je souffre de diabète de type 2 et d'hypertension. "
+            "Je suis également cœliaque (intolérant au gluten) et allergique aux arachides et aux crustacés. "
+            "Mon régime exclut aussi le lactose. "
+            "Vous pouvez me joindre au 06 11 22 33 44 ou par email : paul.renard@orange.fr"
         ),
     },
 ]

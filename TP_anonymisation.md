@@ -47,7 +47,7 @@ b) Où faudrait-il stocker cette table pour que le système soit conforme au RGP
 
 ## Question 3 — Lecture de code : ordre de traitement (2 pts)
 
-Ouvrez `main.py` et lisez la fonction `redact_text()` (ligne ~175).
+Ouvrez `main.py` et lisez la fonction `redact_text()` (ligne ~265).
 
 Elle applique d'abord trois expressions régulières **avant** d'appeler Presidio.
 
@@ -82,7 +82,7 @@ Quelle méthode recommandez-vous ? Décrivez le flux de données entre Traiteur-
 Dans la fonction `faker_pseudonymize()`, les résultats de détection sont triés ainsi avant le remplacement :
 
 ```python
-results = sorted(_analyze(text), key=lambda r: r.start, reverse=True)
+results = sorted(_analyze(text, detect_health), key=lambda r: r.start, reverse=True)
 ```
 
 a) Pourquoi trier dans l'ordre **décroissant** (de la fin vers le début du texte) ?
@@ -136,10 +136,22 @@ Ajoutez une cinquième méthode d'anonymisation : la **suppression pure**. Les e
 
 Fournissez :
 
-1. La fonction Python `deletion_anonymize(text: str) -> dict` à ajouter dans `main.py`
-2. La modification de la route `POST /anonymize` pour inclure la clé `"deletion"` dans la réponse
+1. La fonction Python `deletion_anonymize(text: str, detect_health: bool = False) -> dict` à ajouter dans `main.py`
+2. La modification de la route `POST /anonymize` pour inclure la clé `"deletion"` dans la réponse (en propageant le paramètre `detect_health`)
 3. (Bonus) Les modifications HTML/JS minimales pour afficher cette cinquième colonne dans l'interface
 
 ---
 
-*Durée indicative : 2h — Barème : /16 pts (+ 2 pts bonus)*
+## Question 11 — PatternRecognizer et données Art. 9 (2 pts)
+
+L'application propose une option **"Détecter les données de santé (Art. 9 RGPD)"** activable via une case à cocher sous la barre d'exemples.
+
+a) Activez l'option et soumettez l'exemple **🏥 Données de santé (Art. 9)**. Listez les entités de type `HEALTH` détectées. Pourquoi ces données relèvent-elles de l'**article 9** du RGPD plutôt que de l'article 6 ?
+
+b) Dans `main.py`, repérez le paramètre `context` passé au `MedicalTermRecognizer`. Quel est son rôle ? Donnez un exemple concret de phrase où sa présence ferait augmenter le score de confiance par rapport à une phrase sans ce mot de contexte.
+
+c) Citez **deux limites** de cette approche par liste de mots-clés (`deny_list`) pour détecter des données de santé exprimées en langage naturel. Pour chaque limite, proposez une technologie alternative.
+
+---
+
+*Durée indicative : 2h30 — Barème : /18 pts (+ 2 pts bonus)*
