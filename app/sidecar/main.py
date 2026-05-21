@@ -1,9 +1,22 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re
+import sys
+
+# PyInstaller --onefile compatibility: spaCy can't find models via entry_points
+# in a frozen bundle. Patch spacy.load to fall back to direct module import.
+if getattr(sys, "frozen", False):
+    import importlib
+    import spacy as _spacy
+    _orig_load = _spacy.load
+    def _load_patched(name, *args, **kwargs):
+        try:
+            return _orig_load(name, *args, **kwargs)
+        except OSError:
+            mod = importlib.import_module(name.replace("-", "_"))
+            return mod.load(*args, **kwargs)
+    _spacy.load = _load_patched
 
 app = FastAPI(title="Anonymizer Demo - Traiteur-GPT")
 
@@ -42,7 +55,7 @@ except ImportError:
 PRESIDIO_LANG = "en"
 analyzer = None
 anonymizer_engine = None
-raw_spacy = None   # direct spaCy model for raw NER inspection
+raw_spacy = None
 
 if PRESIDIO_AVAILABLE:
     from presidio_analyzer.nlp_engine import NlpEngineProvider
@@ -56,7 +69,6 @@ if PRESIDIO_AVAILABLE:
             nlp_engine = NlpEngineProvider(nlp_configuration=cfg).create_engine()
             analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["fr"])
             PRESIDIO_LANG = "fr"
-            # Grab the already-loaded spaCy model from Presidio's engine (no double load)
             raw_spacy = getattr(nlp_engine, "nlp", {}).get("fr")
             break
         except Exception:
@@ -73,7 +85,6 @@ medical_recognizer = None
 
 if PRESIDIO_AVAILABLE:
     _MEDICAL_TERMS = [
-        # Maladies chroniques
         "diabète", "diabétique",
         "cancer", "tumeur", "leucémie", "lymphome",
         "sida", "vih",
@@ -82,13 +93,11 @@ if PRESIDIO_AVAILABLE:
         "alzheimer", "parkinson",
         "autisme", "autiste",
         "sclérose",
-        # Santé mentale
         "schizophrénie", "schizophrène",
         "dépression", "dépressif", "dépressive",
         "bipolaire",
         "anxiété",
         "anorexie", "anorexique", "boulimie",
-        # Allergies & intolérances alimentaires (14 allergènes majeurs + autres)
         "allergie", "allergique",
         "intolérance", "intolérant",
         "cœliaque", "coeliaque",
@@ -107,7 +116,6 @@ if PRESIDIO_AVAILABLE:
         "moutarde", "céleri", "lupin",
         "sulfite", "sulfites",
         "fructose", "histamine",
-        # Autres conditions
         "handicap", "handicapé",
         "obésité", "obèse",
         "hypertension", "hypertendu",
@@ -171,7 +179,7 @@ def presidio_anonymize(text: str, detect_health: bool = False) -> dict:
     if not PRESIDIO_AVAILABLE:
         return {
             "available": False,
-            "text": "⚠️ Presidio non installé.\n→ pip install presidio-analyzer presidio-anonymizer spacy\n→ python -m spacy download fr_core_news_lg",
+            "text": "⚠️ Presidio non installé.",
             "entities": [],
         }
     try:
@@ -186,8 +194,6 @@ def presidio_anonymize(text: str, detect_health: bool = False) -> dict:
             }
             for r in results
         ]
-
-        # Entities spaCy detected but Presidio silently ignored (e.g. MISC instead of PER)
         spacy_missed = []
         if raw_spacy:
             doc = raw_spacy(text)
@@ -198,7 +204,6 @@ def presidio_anonymize(text: str, detect_health: bool = False) -> dict:
                 )
                 if not overlaps:
                     spacy_missed.append({"text": ent.text, "label": ent.label_})
-
         return {"available": True, "text": anonymized.text, "entities": entities, "spacy_missed": spacy_missed}
     except Exception as exc:
         return {"available": True, "text": f"Erreur : {exc}", "entities": [], "spacy_missed": []}
@@ -206,10 +211,7 @@ def presidio_anonymize(text: str, detect_health: bool = False) -> dict:
 
 def scrubadub_anonymize(text: str) -> dict:
     if not SCRUBADUB_AVAILABLE:
-        return {
-            "available": False,
-            "text": "⚠️ Scrubadub non installé.\n→ pip install scrubadub",
-        }
+        return {"available": False, "text": "⚠️ Scrubadub non installé."}
     try:
         scrubber = scrubadub.Scrubber()
         return {"available": True, "text": scrubber.clean(text)}
@@ -219,22 +221,13 @@ def scrubadub_anonymize(text: str) -> dict:
 
 def faker_pseudonymize(text: str, detect_health: bool = False) -> dict:
     if not FAKER_AVAILABLE:
-        return {
-            "available": False,
-            "text": "⚠️ Faker non installé.\n→ pip install faker",
-            "mapping": {},
-        }
+        return {"available": False, "text": "⚠️ Faker non installé.", "mapping": {}}
     if not PRESIDIO_AVAILABLE:
-        return {
-            "available": False,
-            "text": "⚠️ Presidio requis pour la détection.\n→ pip install presidio-analyzer",
-            "mapping": {},
-        }
+        return {"available": False, "text": "⚠️ Presidio requis pour la détection.", "mapping": {}}
     try:
         results = sorted(_analyze(text, detect_health), key=lambda r: r.start, reverse=True)
         mapping: dict[str, str] = {}
         pseudo = text
-
         for r in results:
             original = text[r.start : r.end]
             if original not in mapping:
@@ -252,22 +245,19 @@ def faker_pseudonymize(text: str, detect_health: bool = False) -> dict:
                 elif et == "DATE_TIME":
                     mapping[original] = fake.date(pattern="%d/%m/%Y")
                 elif et == "HEALTH":
-                    mapping[original] = f"[CONDITION_MÉDICALE]"
+                    mapping[original] = "[CONDITION_MÉDICALE]"
                 else:
                     mapping[original] = f"[{et}_FICTIF]"
             pseudo = pseudo[: r.start] + mapping[original] + pseudo[r.end :]
-
         return {"available": True, "text": pseudo, "mapping": mapping}
     except Exception as exc:
         return {"available": True, "text": f"Erreur : {exc}", "mapping": {}}
 
 
 def redact_text(text: str, detect_health: bool = False) -> dict:
-    # Start with regex pass for common patterns not always caught by NLP
     redacted = _EMAIL_RE.sub("██████████", text)
     redacted = _PHONE_FR.sub("██ ██ ██ ██ ██", redacted)
     redacted = _CARD_RE.sub("████ ████ ████ ████", redacted)
-
     if PRESIDIO_AVAILABLE:
         try:
             results = sorted(_analyze(text, detect_health), key=lambda r: r.start, reverse=True)
@@ -276,7 +266,6 @@ def redact_text(text: str, detect_health: bool = False) -> dict:
                 redacted = redacted[: r.start] + "█" * length + redacted[r.end :]
         except Exception:
             pass
-
     return {"available": True, "text": redacted}
 
 
@@ -285,11 +274,6 @@ def redact_text(text: str, detect_health: bool = False) -> dict:
 class TextRequest(BaseModel):
     text: str
     detect_health: bool = False
-
-
-@app.get("/")
-async def root():
-    return FileResponse("static/index.html")
 
 
 @app.post("/anonymize")
@@ -436,4 +420,15 @@ SAMPLE_TEXTS = [
 ]
 
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# ── Entry point (called by PyInstaller binary) ───────────────────────────────
+
+if __name__ == "__main__":
+    import argparse
+    import uvicorn
+
+    parser = argparse.ArgumentParser(description="Anonymizer sidecar server")
+    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--host", default="127.0.0.1")
+    args = parser.parse_args()
+
+    uvicorn.run(app, host=args.host, port=args.port, log_level="error")

@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/cyber/.cargo/bin/**)",
+      "Read(//c/Users//**)",
+      "Bash(cargo --version 2>&1; echo \"EXIT:$?\")",
+      "Bash(cmd /c build_desktop.bat 2>&1)",
+      "Bash(cmd /c \"C:\\\\\\\\git\\\\\\\\ai\\\\\\\\anonymizer\\\\\\\\app\\\\\\\\build_desktop.bat\" 2>&1)",
+      "Bash(cmd /c \"build_desktop.bat 2>&1\" | cat)",
+      "Bash(cmd /c \"where python & where node & where npm & where cargo\")",
+      "Bash(powershell -Command \"& cmd /c 'build_desktop.bat' 2>&1\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\build_desktop.bat' 2>&1\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pip.exe' install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\sidecar\\\\requirements.txt' 2>&1\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe' -c 'import fr_core_news_sm; print\\(\\\\\"OK\\\\\"\\)' 2>&1\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe' -m spacy download fr_core_news_sm 2>&1\")",
+      "Bash(powershell -Command '$env:PYTHONHTTPSVERIFY=\"0\"; & \"C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe\" -m spacy download fr_core_news_sm 2>&1')",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pip.exe' install 'https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.8.0/fr_core_news_sm-3.8.0-py3-none-any.whl' --trusted-host github.com --trusted-host objects.githubusercontent.com --trusted-host releases.githubusercontent.com 2>&1\")",
+      "Bash(curl -kL \"https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.8.0/fr_core_news_sm-3.8.0-py3-none-any.whl\" -o \"/tmp/fr_core_news_sm.whl\" 2>&1 && echo \"Downloaded OK\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pip.exe' install 'C:/tmp/fr_core_news_sm.whl' --trusted-host pypi.org 2>&1\")",
+      "Read(//tmp/**)",
+      "Bash(cygpath -w /tmp/fr_core_news_sm.whl)",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pip.exe' install 'C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\fr_core_news_sm.whl' 2>&1\")",
+      "Bash(cp /tmp/fr_core_news_sm.whl /tmp/fr_core_news_sm-3.8.0-py3-none-any.whl && powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pip.exe' install 'C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\fr_core_news_sm-3.8.0-py3-none-any.whl' 2>&1\")",
+      "Bash(powershell -Command \"& 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe' -c 'import fr_core_news_sm; print\\(\\\\\"spaCy model OK:\\\\\", fr_core_news_sm.__version__\\)' 2>&1\")",
+      "Bash(powershell -Command '& \"C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import fr_core_news_sm; print\\(fr_core_news_sm.__version__\\)\" 2>&1')",
+      "Bash(powershell -Command \"Set-Location 'C:\\\\git\\\\ai\\\\anonymizer\\\\app'; npm install --silent 2>&1\")",
+      "Bash(ls C:/git/ai/anonymizer/app/node_modules/.bin/tauri* 2>&1 | head -5)",
+      "Bash(powershell -Command '& \"C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import rustc; print\\(rustc\\)\" 2>&1; rustc -vV 2>&1 | Select-String \"host:\"')",
+      "Bash(mkdir -p C:/git/ai/anonymizer/app/src-tauri/binaries 2>/dev/null; rm -f C:/git/ai/anonymizer/app/src-tauri/binaries/anonymizer-sidecar-x86_64-pc-windows-msvc.exe 2>/dev/null; true)",
+      "Bash(powershell -Command '\nSet-Location \"C:\\\\git\\\\ai\\\\anonymizer\\\\app\"\n& \"C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\.venv\\\\Scripts\\\\pyinstaller.exe\" `\n    \"sidecar\\\\main.py\" `\n    --onefile `\n    --name anonymizer-sidecar `\n    --distpath \"src-tauri\\\\binaries\" `\n    --workpath \"$env:TEMP\\\\pyi_anon_build\" `\n    --specpath \"$env:TEMP\\\\pyi_anon_spec\" `\n    --collect-all spacy `\n    --collect-all fr_core_news_sm `\n    --collect-all presidio_analyzer `\n    --collect-all presidio_anonymizer `\n    --collect-all scrubadub `\n    --collect-all faker `\n    --hidden-import uvicorn.logging `\n    --hidden-import uvicorn.loops `\n    --hidden-import uvicorn.loops.auto `\n    --hidden-import uvicorn.protocols `\n    --hidden-import uvicorn.protocols.http `\n    --hidden-import uvicorn.protocols.http.auto `\n    --hidden-import uvicorn.lifespan `\n    --hidden-import uvicorn.lifespan.on `\n    --clean `\n    --noconfirm `\n    --log-level WARN 2>&1\n')",
+      "Bash(sleep 120 && wc -c \"C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--git-ai-anonymizer-app\\\\f610c8d0-130c-4cfe-a84a-251eb5b2f2f7\\\\tasks\\\\by5lu0p7g.output\" && tail -20 \"C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--git-ai-anonymizer-app\\\\f610c8d0-130c-4cfe-a84a-251eb5b2f2f7\\\\tasks\\\\by5lu0p7g.output\")",
+      "Bash(sleep 300 && wc -c \"C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--git-ai-anonymizer-app\\\\f610c8d0-130c-4cfe-a84a-251eb5b2f2f7\\\\tasks\\\\by5lu0p7g.output\" && tail -20 \"C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--git-ai-anonymizer-app\\\\f610c8d0-130c-4cfe-a84a-251eb5b2f2f7\\\\tasks\\\\by5lu0p7g.output\")",
+      "Bash(powershell -Command \"Get-Process -Name pyinstaller -ErrorAction SilentlyContinue | Select-Object Id,CPU,Name; Get-Process -Name python -ErrorAction SilentlyContinue | Select-Object Id,CPU,Name\" 2>&1)",
+      "Bash(powershell -Command \"Set-Location 'C:\\\\git\\\\ai\\\\anonymizer\\\\app'; npm run tauri build 2>&1\")",
+      "Bash(powershell -Command \"Set-Location 'C:\\\\git\\\\ai\\\\anonymizer\\\\app'; & '.\\\\node_modules\\\\.bin\\\\tauri.cmd' build 2>&1\")",
+      "Bash(powershell -Command \"Start-Process 'C:\\\\git\\\\ai\\\\anonymizer\\\\app\\\\src-tauri\\\\target\\\\release\\\\bundle\\\\nsis\\\\Anonymizer_0.1.0_x64-setup.exe' -Wait 2>&1\")",
+      "Bash(powershell -Command \"Get-StartApps | Where-Object {$_.Name -like '*nonymizer*'} 2>&1; ls 'C:\\\\Program Files\\\\Anonymizer\\\\' 2>&1; ls \\\\\"\\\\$env:LOCALAPPDATA\\\\Anonymizer\\\\*\\\\\" 2>&1\")",
+      "Bash(powershell -Command \"Start-Process 'C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Anonymizer\\\\anonymizer.exe'\" 2>&1)",
+      "Bash(powershell -Command \"Start-Process 'C:\\\\Users\\\\cyber\\\\AppData\\\\Local\\\\Anonymizer\\\\anonymizer.exe'\")",
+      "Bash(echo \"EXIT:$?\")"
+    ]
+  }
+}

@@ -16,10 +16,10 @@
       --text:      #e2e6f3;
       --text-dim:  #9aa3bf;
 
-      --presidio:  #3b82f6;   /* blue */
-      --scrubadub: #22c55e;   /* green */
-      --faker:     #f59e0b;   /* amber */
-      --redaction: #ef4444;   /* red */
+      --presidio:  #3b82f6;
+      --scrubadub: #22c55e;
+      --faker:     #f59e0b;
+      --redaction: #ef4444;
 
       --radius: 10px;
       --font: "Segoe UI", system-ui, sans-serif;
@@ -58,6 +58,7 @@
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .badge {
       font-size: .7rem;
@@ -66,8 +67,22 @@
       font-weight: 600;
       letter-spacing: .3px;
     }
-    .badge.ok   { background: #16391f; color: #4ade80; border: 1px solid #166534; }
-    .badge.warn { background: #3d2506; color: #fbbf24; border: 1px solid #78350f; }
+    .badge.ok      { background: #16391f; color: #4ade80; border: 1px solid #166534; }
+    .badge.warn    { background: #3d2506; color: #fbbf24; border: 1px solid #78350f; }
+    .badge.loading { background: #1e2235; color: var(--text-dim); border: 1px solid var(--border); animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+    /* ── Connecting overlay ───────────────────────────────── */
+    #connectingBanner {
+      display: none;
+      background: #1a1d27;
+      border-bottom: 1px solid var(--border);
+      padding: 8px 28px;
+      font-size: .78rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    #connectingBanner.visible { display: block; }
 
     /* ── Input zone ───────────────────────────────────────── */
     .input-zone {
@@ -106,7 +121,6 @@
     #userInput:focus { border-color: var(--presidio); }
     #userInput::placeholder { color: var(--muted); }
 
-    /* Sample selector */
     .samples-bar {
       display: flex;
       gap: 8px;
@@ -170,7 +184,6 @@
       flex-direction: column;
       overflow: hidden;
     }
-
     .col-header {
       padding: 12px 14px 10px;
       border-bottom: 1px solid var(--border);
@@ -183,15 +196,8 @@
       align-items: center;
       gap: 8px;
     }
-    .col-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .col-title h2 {
-      font-size: .9rem;
-      font-weight: 700;
-    }
+    .col-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .col-title h2 { font-size: .9rem; font-weight: 700; }
     .col-tag {
       font-size: .68rem;
       padding: 2px 7px;
@@ -201,13 +207,8 @@
       letter-spacing: .4px;
       margin-left: auto;
     }
-    .col-desc {
-      font-size: .72rem;
-      color: var(--text-dim);
-      line-height: 1.45;
-    }
+    .col-desc { font-size: .72rem; color: var(--text-dim); line-height: 1.45; }
 
-    /* color accents per column */
     .col-presidio  .col-dot { background: var(--presidio); }
     .col-presidio  .col-tag { background: #1e3a5f; color: var(--presidio); }
     .col-presidio  .col-header { border-top: 3px solid var(--presidio); }
@@ -242,7 +243,6 @@
     }
     .output-text.placeholder { color: var(--muted); font-style: italic; }
 
-    /* spinning loader */
     .loader {
       display: none;
       width: 18px; height: 18px;
@@ -255,7 +255,6 @@
     .loading .loader { display: inline-block; }
     .loading .output-text { opacity: .4; }
 
-    /* entity highlights in presidio output */
     .ent {
       display: inline-block;
       border-radius: 4px;
@@ -273,12 +272,7 @@
     .ent-default       { background: #1e2235; color: var(--text-dim); }
     .ent-HEALTH        { background: #2d1228; color: #f9a8d4; }
 
-    /* entity pills list */
-    .entities-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+    .entities-list { display: flex; flex-wrap: wrap; gap: 6px; }
     .ent-pill {
       font-size: .7rem;
       padding: 2px 8px;
@@ -289,7 +283,6 @@
     }
     .ent-pill .score { color: var(--muted); font-size: .65rem; }
 
-    /* Faker mapping table */
     .mapping-title {
       font-size: .72rem;
       font-weight: 700;
@@ -302,11 +295,7 @@
       align-items: center;
       gap: 6px;
     }
-    .mapping-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: .75rem;
-    }
+    .mapping-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
     .mapping-table th {
       text-align: left;
       color: var(--muted);
@@ -323,14 +312,7 @@
     .mapping-table td:first-child { color: var(--redaction); }
     .mapping-table td:last-child  { color: var(--faker); }
 
-    /* spaCy missed entities warning */
-    .spacy-warn {
-      border-top: 1px solid var(--border);
-      padding-top: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .spacy-warn { border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
     .spacy-warn-title {
       font-size: .7rem;
       font-weight: 700;
@@ -341,11 +323,7 @@
       align-items: center;
       gap: 5px;
     }
-    .spacy-warn-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
+    .spacy-warn-list { display: flex; flex-wrap: wrap; gap: 5px; }
     .spacy-warn-pill {
       font-size: .7rem;
       padding: 2px 8px;
@@ -357,118 +335,10 @@
       align-items: center;
       gap: 5px;
     }
-    .spacy-warn-pill .spacy-label {
-      color: #6b7280;
-      font-size: .62rem;
-      font-variant: small-caps;
-    }
-
-    /* ── Mapping actions & deanon ─────────────────────────── */
-    .mapping-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-    .mapping-btn {
-      font-size: .72rem;
-      padding: 4px 10px;
-      border-radius: 5px;
-      border: 1px solid var(--faker);
-      background: transparent;
-      color: var(--faker);
-      cursor: pointer;
-      transition: background .15s, color .15s;
-    }
-    .mapping-btn:hover { background: var(--faker); color: #000; }
-    .mapping-btn.load { border-color: var(--muted); color: var(--muted); }
-    .mapping-btn.load:hover { background: var(--muted); color: #000; }
-    .deanon-section {
-      border-top: 1px solid var(--border);
-      margin-top: 12px;
-      padding-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .deanon-title {
-      font-size: .72rem;
-      font-weight: 700;
-      color: var(--faker);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
-    .deanon-textarea {
-      width: 100%;
-      min-height: 80px;
-      background: #0d0f1a;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: .82rem;
-      font-family: inherit;
-      padding: 8px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-    .deanon-textarea:focus { outline: none; border-color: var(--faker); }
-    .deanon-textarea::placeholder { color: var(--muted); }
-    .deanon-btn {
-      align-self: flex-end;
-      font-size: .78rem;
-      padding: 5px 14px;
-      border-radius: 5px;
-      border: none;
-      background: var(--faker);
-      color: #000;
-      font-weight: 700;
-      cursor: pointer;
-      transition: opacity .15s;
-    }
-    .deanon-btn:hover { opacity: .85; }
-    .deanon-btn:disabled { opacity: .4; cursor: default; }
-    .deanon-result {
-      background: #0d0f1a;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px;
-      font-size: .82rem;
-      white-space: pre-wrap;
-      word-break: break-word;
-      color: var(--text);
-      min-height: 40px;
-    }
-
-    /* ── Copy button ──────────────────────────────────────── */
-    .output-wrapper { position: relative; }
-    .copy-btn {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: #1e2235;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: .75rem;
-      padding: 2px 6px;
-      line-height: 1.4;
-      opacity: 0;
-      transition: opacity .15s, color .15s;
-      pointer-events: none;
-    }
-    .output-wrapper:hover .copy-btn,
-    .copy-btn:focus { opacity: 1; pointer-events: auto; }
-    .copy-btn:hover { color: var(--text); border-color: var(--text); }
-    .copy-btn.copied { color: #4ade80; border-color: #166534; }
+    .spacy-warn-pill .spacy-label { color: #6b7280; font-size: .62rem; font-variant: small-caps; }
 
     /* ── Options bar ─────────────────────────────────────── */
-    .options-bar {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      padding-top: 4px;
-    }
+    .options-bar { display: flex; gap: 16px; align-items: center; padding-top: 4px; }
     .option-toggle {
       display: flex;
       align-items: center;
@@ -480,11 +350,7 @@
       transition: color .15s;
     }
     .option-toggle:hover { color: var(--text); }
-    .option-toggle input[type="checkbox"] {
-      accent-color: #f472b6;
-      width: 14px; height: 14px;
-      cursor: pointer;
-    }
+    .option-toggle input[type="checkbox"] { accent-color: #f472b6; width: 14px; height: 14px; cursor: pointer; }
     .art9-badge {
       font-size: .62rem;
       padding: 1px 5px;
@@ -496,12 +362,7 @@
       letter-spacing: .3px;
     }
 
-    /* unavailable state */
-    .unavailable .output-text {
-      color: var(--muted);
-      font-style: italic;
-      font-size: .8rem;
-    }
+    .unavailable .output-text { color: var(--muted); font-style: italic; font-size: .8rem; }
 
     /* ── Footer ───────────────────────────────────────────── */
     footer {
@@ -525,6 +386,11 @@
     <!-- populated by JS -->
   </div>
 </header>
+
+<!-- ── Connecting banner ────────────────────────────────────────── -->
+<div id="connectingBanner">
+  ⏳ Démarrage du moteur d'analyse… (spaCy/Presidio se charge, patientez quelques secondes)
+</div>
 
 <!-- ── Input zone ──────────────────────────────────────────────── -->
 <div class="input-zone">
@@ -564,10 +430,7 @@
     </div>
     <div class="col-body">
       <div class="loader"></div>
-      <div class="output-wrapper">
-        <div class="output-text placeholder" id="presidio-text">En attente de saisie…</div>
-        <button class="copy-btn" data-copy="presidio-text" title="Copier"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></button>
-      </div>
+      <div class="output-text placeholder" id="presidio-text">En attente de saisie…</div>
       <div class="entities-list" id="presidio-entities"></div>
       <div id="presidio-spacy-warn"></div>
     </div>
@@ -588,10 +451,7 @@
     </div>
     <div class="col-body">
       <div class="loader"></div>
-      <div class="output-wrapper">
-        <div class="output-text placeholder" id="scrubadub-text">En attente de saisie…</div>
-        <button class="copy-btn" data-copy="scrubadub-text" title="Copier"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></button>
-      </div>
+      <div class="output-text placeholder" id="scrubadub-text">En attente de saisie…</div>
     </div>
   </div>
 
@@ -609,28 +469,8 @@
     </div>
     <div class="col-body">
       <div class="loader"></div>
-      <div class="output-wrapper">
-        <div class="output-text placeholder" id="faker-text">En attente de saisie…</div>
-        <button class="copy-btn" data-copy="faker-text" title="Copier"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></button>
-      </div>
+      <div class="output-text placeholder" id="faker-text">En attente de saisie…</div>
       <div id="faker-mapping"></div>
-      <div id="faker-actions" class="mapping-actions" style="display:none">
-        <button class="mapping-btn" id="btnDownloadTable">⬇ Sauvegarder la table</button>
-        <label class="mapping-btn load" style="cursor:pointer">
-          📂 Charger une table
-          <input type="file" id="fileLoadTable" accept=".json" style="display:none">
-        </label>
-      </div>
-      <div id="faker-deanon" class="deanon-section" style="display:none">
-        <div class="deanon-title">↩ Désanonymiser une réponse</div>
-        <textarea class="deanon-textarea" id="deanonInput"
-          placeholder="Coller ici la réponse du LLM (contenant les pseudonymes)…"></textarea>
-        <button class="deanon-btn" id="btnDeanon">↩ Désanonymiser</button>
-        <div class="output-wrapper">
-          <div class="deanon-result" id="deanonResult" style="display:none"></div>
-          <button class="copy-btn" data-copy="deanonResult" title="Copier"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -648,10 +488,7 @@
     </div>
     <div class="col-body">
       <div class="loader"></div>
-      <div class="output-wrapper">
-        <div class="output-text placeholder" id="redaction-text">En attente de saisie…</div>
-        <button class="copy-btn" data-copy="redaction-text" title="Copier"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></button>
-      </div>
+      <div class="output-text placeholder" id="redaction-text">En attente de saisie…</div>
     </div>
   </div>
 
@@ -662,7 +499,8 @@
 </footer>
 
 <script>
-  const API = "";   // même origine
+  // Points to the Python sidecar running locally
+  const API = "http://localhost:8765";
 
   // ── Debounce ──────────────────────────────────────────────────────────────
   function debounce(fn, ms) {
@@ -685,7 +523,6 @@
     return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
-  // Highlight <TOKEN> patterns in Presidio output
   function renderPresidioText(raw) {
     return escapeHtml(raw).replace(
       /&lt;([A-Z_]+)&gt;/g,
@@ -699,8 +536,7 @@
   // ── Render columns ────────────────────────────────────────────────────────
   function setLoading(on) {
     ["presidio","scrubadub","faker","redaction"].forEach(id => {
-      const card = document.getElementById(`col-${id}`);
-      card.classList.toggle("loading", on);
+      document.getElementById(`col-${id}`).classList.toggle("loading", on);
     });
   }
 
@@ -709,7 +545,6 @@
     const ptEl = document.getElementById("presidio-text");
     const peEl = document.getElementById("presidio-entities");
     const p = data.presidio;
-
     if (!p.available) {
       document.getElementById("col-presidio").classList.add("unavailable");
       ptEl.classList.remove("placeholder");
@@ -726,7 +561,6 @@
         pill.innerHTML = `${escapeHtml(e.original)} <span class="score">${e.score}</span>`;
         peEl.appendChild(pill);
       });
-
       const warnEl = document.getElementById("presidio-spacy-warn");
       warnEl.innerHTML = "";
       const missed = p.spacy_missed || [];
@@ -754,11 +588,7 @@
     // ── Scrubadub ──
     const sEl = document.getElementById("scrubadub-text");
     const s = data.scrubadub;
-    if (!s.available) {
-      document.getElementById("col-scrubadub").classList.add("unavailable");
-    } else {
-      document.getElementById("col-scrubadub").classList.remove("unavailable");
-    }
+    document.getElementById("col-scrubadub").classList.toggle("unavailable", !s.available);
     sEl.classList.remove("placeholder");
     sEl.textContent = s.text || "";
 
@@ -766,29 +596,17 @@
     const fEl  = document.getElementById("faker-text");
     const fmEl = document.getElementById("faker-mapping");
     const f = data.faker;
-    if (!f.available) {
-      document.getElementById("col-faker").classList.add("unavailable");
-    } else {
-      document.getElementById("col-faker").classList.remove("unavailable");
-    }
+    document.getElementById("col-faker").classList.toggle("unavailable", !f.available);
     fEl.classList.remove("placeholder");
     fEl.textContent = f.text || "";
-
     fmEl.innerHTML = "";
     const mapping = f.mapping || {};
-    currentMapping = mapping;
     const keys = Object.keys(mapping);
-    const hasMapping = keys.length > 0;
-    document.getElementById("faker-actions").style.display = hasMapping ? "flex" : "none";
-    document.getElementById("faker-deanon").style.display = hasMapping ? "flex" : "none";
-    document.getElementById("deanonResult").style.display = "none";
-    document.getElementById("deanonResult").textContent = "";
-    if (hasMapping) {
+    if (keys.length > 0) {
       const title = document.createElement("div");
       title.className = "mapping-title";
       title.innerHTML = `↩ Table de correspondance <span style="color:var(--muted);font-size:.65rem;font-weight:400">(permet la réversibilité)</span>`;
       fmEl.appendChild(title);
-
       const tbl = document.createElement("table");
       tbl.className = "mapping-table";
       tbl.innerHTML = `<thead><tr><th>Original (réel)</th><th>Pseudonyme (fictif)</th></tr></thead>`;
@@ -817,10 +635,6 @@
     document.getElementById("presidio-entities").innerHTML = "";
     document.getElementById("presidio-spacy-warn").innerHTML = "";
     document.getElementById("faker-mapping").innerHTML = "";
-    document.getElementById("faker-actions").style.display = "none";
-    document.getElementById("faker-deanon").style.display = "none";
-    document.getElementById("deanonResult").style.display = "none";
-    currentMapping = {};
   }
 
   // ── API call ──────────────────────────────────────────────────────────────
@@ -838,7 +652,7 @@
       const data = await res.json();
       renderResult(data);
     } catch (err) {
-      console.error(err);
+      console.warn("API not ready yet:", err.message);
     } finally {
       setLoading(false);
     }
@@ -846,27 +660,30 @@
 
   const debouncedProcess = debounce(processText, 320);
 
-  // ── Input listener ────────────────────────────────────────────────────────
+  // ── Input listeners ───────────────────────────────────────────────────────
   document.getElementById("userInput").addEventListener("input", e => {
     debouncedProcess(e.target.value);
   });
-
   document.getElementById("clearBtn").addEventListener("click", () => {
     document.getElementById("userInput").value = "";
     showPlaceholder();
   });
-
   document.getElementById("detectHealth").addEventListener("change", () => {
-    const text = document.getElementById("userInput").value;
-    processText(text);
+    processText(document.getElementById("userInput").value);
   });
 
-  // ── Status badges ─────────────────────────────────────────────────────────
-  async function loadStatus() {
+  // ── Status badges — with retry until sidecar is ready ────────────────────
+  let statusLoaded = false;
+
+  async function loadStatus(attempt = 0) {
     try {
       const res = await fetch(`${API}/status`);
       const s = await res.json();
+      statusLoaded = true;
+      document.getElementById("connectingBanner").classList.remove("visible");
+
       const bar = document.getElementById("libBadges");
+      bar.innerHTML = "";
       const libs = [
         { name: "Presidio" + (s.presidio_lang ? ` (${s.presidio_lang})` : ""), ok: s.presidio },
         { name: "Scrubadub", ok: s.scrubadub },
@@ -878,16 +695,31 @@
         b.textContent = `${ok ? "✓" : "✗"} ${name}`;
         bar.appendChild(b);
       });
-    } catch (e) { /* skip */ }
+
+      // Re-process if user typed something while server was loading
+      const current = document.getElementById("userInput").value;
+      if (current.trim()) processText(current);
+
+    } catch (e) {
+      if (attempt === 0) {
+        document.getElementById("connectingBanner").classList.add("visible");
+        const bar = document.getElementById("libBadges");
+        bar.innerHTML = `<span class="badge loading">⏳ Démarrage…</span>`;
+      }
+      if (attempt < 30) {
+        setTimeout(() => loadStatus(attempt + 1), 1000 + Math.min(attempt * 200, 2000));
+      }
+    }
   }
 
-  // ── Sample buttons ────────────────────────────────────────────────────────
-  async function loadSamples() {
+  // ── Sample buttons — loaded after status is ready ─────────────────────────
+  async function loadSamples(attempt = 0) {
     try {
       const res = await fetch(`${API}/samples`);
-      const samples = await res.json();
+      const sampleList = await res.json();
       const container = document.getElementById("sampleBtns");
-      samples.forEach(s => {
+      container.innerHTML = "";
+      sampleList.forEach(s => {
         const btn = document.createElement("button");
         btn.className = "sample-btn";
         btn.textContent = `${s.icon} ${s.title}`;
@@ -898,83 +730,12 @@
         });
         container.appendChild(btn);
       });
-    } catch (e) { /* skip */ }
-  }
-
-  // ── Current Faker mapping ─────────────────────────────────────────────────
-  let currentMapping = {};
-
-  // ── Download mapping table as JSON ───────────────────────────────────────
-  document.getElementById("btnDownloadTable").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(currentMapping, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "table_anonymisation.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  // ── Load mapping table from JSON file ────────────────────────────────────
-  document.getElementById("fileLoadTable").addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      try {
-        currentMapping = JSON.parse(evt.target.result);
-        document.getElementById("faker-deanon").style.display = "flex";
-        document.getElementById("deanonResult").style.display = "none";
-        document.getElementById("deanonResult").textContent = "";
-      } catch {
-        alert("Fichier JSON invalide.");
+    } catch (e) {
+      if (attempt < 30) {
+        setTimeout(() => loadSamples(attempt + 1), 1500 + Math.min(attempt * 300, 3000));
       }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  });
-
-  // ── Deanonymize ───────────────────────────────────────────────────────────
-  document.getElementById("btnDeanon").addEventListener("click", async () => {
-    const text = document.getElementById("deanonInput").value.trim();
-    if (!text) return;
-    if (!Object.keys(currentMapping).length) {
-      alert("Aucune table de correspondance chargée.");
-      return;
     }
-    const btn = document.getElementById("btnDeanon");
-    btn.disabled = true;
-    try {
-      const res = await fetch(`${API}/deanonymize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, mapping: currentMapping }),
-      });
-      const data = await res.json();
-      const out = document.getElementById("deanonResult");
-      out.textContent = data.text;
-      out.style.display = "block";
-    } catch (err) {
-      alert("Erreur lors de la désanonymisation : " + err.message);
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  // ── Copy to clipboard ─────────────────────────────────────────────────────
-  const ICON_COPY = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M17 4h2a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg>`;
-  const ICON_OK   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-
-  document.addEventListener("click", e => {
-    const btn = e.target.closest(".copy-btn");
-    if (!btn) return;
-    const el = document.getElementById(btn.dataset.copy);
-    if (!el) return;
-    navigator.clipboard.writeText(el.innerText).then(() => {
-      btn.innerHTML = ICON_OK;
-      btn.classList.add("copied");
-      setTimeout(() => { btn.innerHTML = ICON_COPY; btn.classList.remove("copied"); }, 1500);
-    });
-  });
+  }
 
   // ── Init ──────────────────────────────────────────────────────────────────
   loadStatus();
